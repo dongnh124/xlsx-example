@@ -6,8 +6,8 @@ const wb = xlsx.utils.book_new()
 wb.SheetNames.push("Product")
 const ws_data = [ [ 'Handle', 'Title', 'Body (HTML)', 'Vendor', 'Type', 'Tags', 'Published', 'Option1 Name', 'Option1 Value', 'Option2 Name', 'Option2 Value', 'Option3 Name', 'Option3 Value', 'Variant SKU', 'Variant Grams', 'Variant Inventory Tracker', ' Variant Inventory Qty', 'Variant Inventory Policy', 'Variant Fulfillment Service', 'Variant Price', 'Variant Compare At Price', 'Variant Requires Shipping', 'Variant Taxable', 'Variant Barcode', 'Image Src', 'Image Position', 'Image Alt Text', 'Gift Card', 'SEO Title', 'Variant Image', 'Status'] ]
 
-const START = 15
-const END = 19
+const START = 9
+const END = 256
 const keys = Object.keys(file.Sheets.Sheet1)
 const data = []
 let products = []
@@ -16,7 +16,7 @@ for (let i = START; i <= END; i+= 1) {
   products.push((file.Sheets.Sheet1[`B${i}`].v || '').trim())
 }
 products = [...new Set(products)]
-// console.log(products)
+console.log(products.length)
 
 // GET SHEET DATA
 for (let i = START; i <= END; i+= 1) {
@@ -42,10 +42,17 @@ const createRowData = (data, sizeOption, price) => {
   arr.push('TRUE')
   arr.push('Title')
   arr.push(data['E'])
-  arr.push('Linker')
-  arr.push(data['D'])
-  arr.push('Size')
-  arr.push(sizeOption)
+  if (data['D']) {
+    arr.push('Linker')
+    arr.push(data['D'])
+    arr.push('Size')
+    arr.push(sizeOption)
+  } else {
+    arr.push('Size')
+    arr.push(sizeOption)
+    arr.push(null)
+    arr.push(null)
+  }
   arr.push(data['F'])
   arr.push(null)
   arr.push('shopify')
@@ -71,9 +78,12 @@ const createRowData = (data, sizeOption, price) => {
 products.forEach(title => {
   const productData = data.filter(d => d['B'].trim() === title)
   productData.forEach((d, i) => {
-    ws_data.push(createRowData(d, d['H'], Number(d['I'].replace('USD', '').replace(',', '').trim())))
-    ws_data.push(createRowData(d, d['J'], Number(d['K'].replace('USD', '').replace(',', '').trim())))
-    ws_data.push(createRowData(d, d['L'], Number(d['M'].replace('USD', '').replace(',', '').trim())))
+    const price1 = Number(String(d['I'] || 0).replace('USD', '').replace(',', '').trim())
+    const price2 = Number(String(d['K'] || 0).replace('USD', '').replace(',', '').trim())
+    const price3 = Number(String(d['M'] || 0).replace('USD', '').replace(',', '').trim())
+    price1 && ws_data.push(createRowData(d, d['H'], price1))
+    price2 && ws_data.push(createRowData(d, d['J'], price2))
+    price3 && ws_data.push(createRowData(d, d['L'], price3))
   })
 })
 
